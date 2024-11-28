@@ -20,6 +20,31 @@ DB_CONFIG = {
     'connect_timeout': 10  # Establece un tiempo de espera de conexión para evitar bloqueos largos
 }
 
+@app.route('/api/mis_registros', methods=['POST'])
+def obtener_registros():
+    try:
+        data = request.json
+        nombre_asociado = data.get('nombreasociado')
+
+        if not nombre_asociado:
+            return jsonify({'error': 'Falta el nombre asociado'}), 400
+
+        connection = pymysql.connect(**DB_CONFIG)
+        cursor = connection.cursor()
+
+        query = """
+        SELECT a.fecha, a.estado, a.personal, a.descripcion
+        FROM asistenciaPersonal a
+        INNER JOIN usuarioPersonal u ON a.personal = u.nombreasociado
+        WHERE u.nombreasociado = %s
+        """
+        cursor.execute(query, (nombre_asociado,))
+        registros = cursor.fetchall()
+
+        return jsonify(registros), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 
 @app.route('/api/login', methods=['POST'])
 def login():
