@@ -20,6 +20,40 @@ DB_CONFIG = {
     'connect_timeout': 10  # Establece un tiempo de espera de conexión para evitar bloqueos largos
 }
 
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    try:
+        # Obtener datos del cuerpo de la solicitud
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return jsonify({'error': 'Faltan datos en la solicitud'}), 400
+
+        # Conexión a la base de datos
+        connection = pymysql.connect(**DB_CONFIG)
+        cursor = connection.cursor()
+
+        # Verificar usuario en la base de datos
+        query = """
+        SELECT nombreasociado FROM usuarioPersonal
+        WHERE nombreuser = %s AND pass = %s
+        """
+        cursor.execute(query, (username, password))
+        user = cursor.fetchone()
+
+        if user:
+            return jsonify({'message': 'Inicio de sesión exitoso', 'nombreasociado': user['nombreasociado']}), 200
+        else:
+            return jsonify({'error': 'Usuario o contraseña incorrectos'}), 401
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+
 @app.route('/asistencias', methods=['GET'])
 def get_asistencias():
     try:
